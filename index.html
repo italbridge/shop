@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ItalBridge — цена в рублях</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  /* ============ НАСТРОЙКИ — меняйте только здесь (см. блок CONFIG в скрипте ниже) ============ */
+  :root {
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --bg2: var(--tg-theme-secondary-bg-color, #f2f3f5);
+    --text: var(--tg-theme-text-color, #16181d);
+    --hint: var(--tg-theme-hint-color, #7b8190);
+    --accent: var(--tg-theme-button-color, #1f8a4c);
+    --accent-text: var(--tg-theme-button-text-color, #ffffff);
+    --line: rgba(127,127,127,.22);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg2); color: var(--text);
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 16px 16px 32px; }
+  header { display: flex; align-items: center; gap: 10px; margin: 4px 0 16px; }
+  header .flag { font-size: 26px; }
+  header h1 { font-size: 20px; margin: 0; }
+  header p { margin: 0; color: var(--hint); font-size: 13px; }
+  .card { background: var(--bg); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+  .card h2 { font-size: 15px; margin: 0 0 12px; }
+  label { display: block; font-size: 13px; color: var(--hint); margin: 10px 0 6px; }
+  label:first-of-type { margin-top: 0; }
+  input, select, textarea { width: 100%; font: inherit; color: var(--text); background: var(--bg2);
+    border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; outline: none; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 64px; }
+  .eur { position: relative; }
+  .eur input { font-size: 22px; font-weight: 600; padding-right: 40px; }
+  .eur span { position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 20px; color: var(--hint); }
+  .result { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; }
+  .row .k { color: var(--hint); }
+  .row.total { font-size: 20px; font-weight: 700; padding-top: 8px; }
+  .row.total .v { color: var(--accent); }
+  .note { font-size: 12px; color: var(--hint); margin-top: 8px; }
+  .empty { color: var(--hint); font-size: 14px; }
+  button { width: 100%; font: inherit; font-weight: 600; border: 0; border-radius: 12px;
+    padding: 14px; background: var(--accent); color: var(--accent-text); cursor: pointer; margin-top: 14px; }
+  button:disabled { opacity: .45; cursor: default; }
+  .steps { margin: 0; padding-left: 20px; font-size: 14px; }
+  .steps li { margin: 4px 0; }
+  .err { color: #d33; font-size: 13px; margin-top: 8px; display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="flag">🇮🇹</div>
+    <div>
+      <h1>ItalBridge</h1>
+      <p>Оригинальные бренды из Италии с доставкой по России</p>
+    </div>
+  </header>
+
+  <section class="card">
+    <h2>💶 Цена в рублях</h2>
+    <label for="eur">Цена товара в евро</label>
+    <div class="eur"><input id="eur" type="text" inputmode="decimal" placeholder="99" autocomplete="off"><span>€</span></div>
+
+    <label for="cat">Что заказываете</label>
+    <select id="cat">
+      <option value="1">Одежда, сумки (≈ 1 кг)</option>
+      <option value="2">Верхняя одежда, обувь (≈ 2 кг)</option>
+      <option value="0.5">Украшения, аксессуары (≈ 0,5 кг)</option>
+    </select>
+
+    <div class="result" id="result"><div class="empty">Введите цену — посчитаем стоимость под ключ.</div></div>
+  </section>
+
+  <section class="card">
+    <h2>🛍 Оформить заказ</h2>
+    <label for="item">Товар: ссылка или описание</label>
+    <textarea id="item" placeholder="Например: Coccinelle Arlettis, чёрная — или ссылка на товар"></textarea>
+    <label for="size">Размер и цвет</label>
+    <input id="size" type="text" placeholder="M, чёрный">
+    <label for="city">Город доставки</label>
+    <input id="city" type="text" placeholder="Москва">
+    <label for="name">Имя и телефон</label>
+    <input id="name" type="text" placeholder="Анна, +7 900 000-00-00">
+    <div class="err" id="err">Заполните товар, город и контакт.</div>
+    <button id="send">Отправить заявку менеджеру</button>
+    <p class="note">Откроется чат с менеджером с готовым текстом заявки — останется нажать «Отправить». Фото товара можно приложить там же.</p>
+  </section>
+
+  <section class="card">
+    <h2>ℹ️ Как заказать</h2>
+    <ol class="steps">
+      <li>Выберите товар в канале или найдите на любом европейском сайте</li>
+      <li>Посчитайте цену и отправьте заявку</li>
+      <li>Менеджер подтвердит наличие, размер и итоговую цену</li>
+      <li>Внесите предоплату — мы выкупим товар и отправим вам</li>
+    </ol>
+  </section>
+</div>
+
+<script>
+/* ===================== CONFIG — НАСТРОЙКИ ===================== */
+const CONFIG = {
+  KURS: 95,            // ₽ за 1 € (курс EUR/USDT × покупка USDT на Bybit P2P) — обновляйте вручную
+  NACENKA: 1.10,       // +10 %
+  FIX: 1500,           // фиксированная часть, ₽
+  DOSTAVKA_KG: 1500,   // доставка, ₽ за 1 кг
+  ROUND: 100,          // округление вверх до … ₽
+  MANAGER: "LanaY777", // ник менеджера в Telegram БЕЗ @
+};
+/* ============================================================== */
+
+const tg = window.Telegram && window.Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+const $ = id => document.getElementById(id);
+const rub = n => Math.round(n).toLocaleString("ru-RU").replace(/,/g, " ") + " ₽";
+const ceilTo = (n, step) => Math.ceil(n / step - 1e-9) * step;
+
+function parseEur(s) {
+  const v = parseFloat(String(s).replace(/\s/g, "").replace(",", "."));
+  return isFinite(v) && v > 0 && v < 100000 ? v : null;
+}
+
+let last = null;
+function calc() {
+  const eur = parseEur($("eur").value);
+  const kg = parseFloat($("cat").value);
+  if (!eur) {
+    last = null;
+    $("result").innerHTML = '<div class="empty">Введите цену — посчитаем стоимость под ключ.</div>';
+    return;
+  }
+  const price = ceilTo(eur * CONFIG.KURS * CONFIG.NACENKA + CONFIG.FIX, CONFIG.ROUND);
+  const delivery = Math.round(kg * CONFIG.DOSTAVKA_KG);
+  last = { eur, price, delivery, total: price + delivery };
+  $("result").innerHTML =
+    '<div class="row"><span class="k">Товар под ключ</span><span class="v">' + rub(price) + '</span></div>' +
+    '<div class="row"><span class="k">Доставка до Москвы (≈ ' + String(kg).replace(".", ",") + ' кг)</span><span class="v">≈ ' + rub(delivery) + '</span></div>' +
+    '<div class="row total"><span class="k">Итого</span><span class="v">≈ ' + rub(last.total) + '</span></div>' +
+    '<div class="note">Курс на сегодня: 1 € ≈ ' + String(CONFIG.KURS).replace(".", ",") + ' ₽. Точную цену подтвердит менеджер.</div>';
+}
+$("eur").addEventListener("input", calc);
+$("cat").addEventListener("change", calc);
+
+$("send").addEventListener("click", () => {
+  const item = $("item").value.trim(), city = $("city").value.trim(), name = $("name").value.trim();
+  if (!item || !city || !name) { $("err").style.display = "block"; return; }
+  $("err").style.display = "none";
+  const lines = ["Здравствуйте! Хочу оформить заказ в ItalBridge.", "", "🛍 Товар: " + item];
+  if (last) lines.push("💶 Цена: " + last.eur + " € (≈ " + rub(last.price) + " + доставка ≈ " + rub(last.delivery) + ")");
+  if ($("size").value.trim()) lines.push("📏 Размер/цвет: " + $("size").value.trim());
+  lines.push("🏙 Город: " + city, "👤 Контакт: " + name);
+  const url = "https://t.me/" + CONFIG.MANAGER + "?text=" + encodeURIComponent(lines.join("\n"));
+  if (tg && tg.openTelegramLink) tg.openTelegramLink(url);
+  else window.open(url, "_blank");
+});
+</script>
+</body>
+</html>
